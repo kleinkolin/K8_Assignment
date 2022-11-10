@@ -1,19 +1,18 @@
 ###############################################################################################################################################################
 
-Question  ► what happens after db POD deletion?
+Question  ► Scenarios post different POD deletion?
 
-1st ► VOTE POD ► While Deleting Voting POD, result app is still giving the output because of Replica set re-creating the POD & keep the app running. 
+1st ► VOTE POD ► While deleting Voting POD, result app is still giving the output because of Replica set re-creating the POD & keep the app running. 
 
-2nd ► WORKER POD  ► While Deleting WORKER POD, result app is still giving the output because of Replica set re-creating the POD & keep the app running. 
+2nd ► WORKER POD  ► While deleting WORKER POD, result app is still giving the output because of Replica set re-creating the POD & keep the app running. 
 
 3rd ► DB POD ► After deleting the DB POD vote can be given but result page is not updating.
 
-Question  ►  your comment on WHY result app STOPPED working after db POD stop
-►  As in K8 POD is stateless, data is not stored permanently & even in DB its temporary 
+Question  ►  your comment on WHY result app STOPPED working after db POD stop?
+►  In K8 PODs are stateless, data is not stored permanently & even in DB its temporary. 
 
-
-Question  ► your answer to HOW YOU MADE THE RESULT POD work. 
-►  Result page not resPODing, so gave restart to result POD and results start updating.
+Question  ► your answer to HOW YOU MADE THE RESULT POD work? 
+►  Result page not responding, so gave restart to result POD and results start updating.
 
 ###################################################### Voting APP Logs #######################################################################################
 ###############################################################################################################################################################
