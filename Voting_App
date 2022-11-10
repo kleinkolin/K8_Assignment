@@ -1,1 +1,339 @@
+###############################################################################################################################################################
+
+Question  ► what happens after db POD deletion?
+
+1st ► VOTE POD ► While Deleting Voting POD, result app is still giving the output because of Replica set re-creating the POD & keep the app running. 
+
+2nd ► WORKER POD  ► While Deleting WORKER POD, result app is still giving the output because of Replica set re-creating the POD & keep the app running. 
+
+3rd ► DB POD ► After deleting the DB POD vote can be given but result page is not updating.
+
+Question  ►  your comment on WHY result app STOPPED working after db POD stop
+►  As in K8 POD is stateless, data is not stored permanently & even in DB its temporary 
+
+
+Question  ► your answer to HOW YOU MADE THE RESULT POD work. 
+►  Result page not resPODing, so gave restart to result POD and results start updating.
+
+###################################################### Voting APP Logs #######################################################################################
+###############################################################################################################################################################
+
+[root@ip-172-31-13-244 example-voting-app]# cd k8s-specifications/
+[root@ip-172-31-13-244 k8s-specifications]# ls -ltr
+total 36
+-rw-r--r-- 1 root root 292 Nov 10 11:37 worker-deployment.yaml
+-rw-r--r-- 1 root root 192 Nov 10 11:37 vote-service.yaml
+-rw-r--r-- 1 root root 289 Nov 10 11:37 vote-deployment.yaml
+-rw-r--r-- 1 root root 195 Nov 10 11:37 result-service.yaml
+-rw-r--r-- 1 root root 299 Nov 10 11:37 result-deployment.yaml
+-rw-r--r-- 1 root root 152 Nov 10 11:37 redis-service.yaml
+-rw-r--r-- 1 root root 402 Nov 10 11:37 redis-deployment.yaml
+-rw-r--r-- 1 root root 146 Nov 10 11:37 db-service.yaml
+-rw-r--r-- 1 root root 401 Nov 10 11:37 db-deployment.yaml
+[root@ip-172-31-13-244 k8s-specifications]# ls -ltr
+total 36
+[root@ip-172-31-13-244 k8s-specifications]# cat result-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: result
+spec:
+  type: NodePort
+  ports:
+  - name: "result-service"
+    port: 5001
+    targetPort: 80
+    nodePort: 31001
+  selector:
+    app: result
+[root@ip-172-31-13-244 k8s-specifications]# cat vote-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: vote
+spec:
+  type: NodePort
+  ports:
+  - name: "vote-service"
+    port: 5000
+    targetPort: 80
+    nodePort: 31000
+  selector:
+    app: vote
+
+[root@ip-172-31-13-244 k8s-specifications]# vi vote-service.yaml
+[root@ip-172-31-13-244 k8s-specifications]# vi vote-service.yaml
+[root@ip-172-31-13-244 k8s-specifications]# cat vote-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: vote
+spec:
+  type: NodePort
+  ports:
+  - name: "vote-service"
+    port: 5000
+    targetPort: 80
+    nodePort: 31002
+  selector:
+    app: vote
+
+[root@ip-172-31-13-244 k8s-specifications]# vi result-service.yaml
+[root@ip-172-31-13-244 k8s-specifications]# cat vote-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: vote
+spec:
+  type: NodePort
+  ports:
+  - name: "vote-service"
+    port: 5000
+    targetPort: 80
+    nodePort: 31002
+  selector:
+    app: vote
+
+[root@ip-172-31-13-244 k8s-specifications]# cat result-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: result
+spec:
+  type: NodePort
+  ports:
+  - name: "result-service"
+    port: 5001
+    targetPort: 80
+    nodePort: 31003
+  selector:
+    app: result
+[root@ip-172-31-13-244 k8s-specifications]# kubectl apply -f .
+deployment.apps/db created
+service/db created
+deployment.apps/redis created
+service/redis created
+deployment.apps/result created
+service/result created
+deployment.apps/vote created
+service/vote created
+deployment.apps/worker created
+[root@ip-172-31-13-244 k8s-specifications]# ls -ltr
+total 36
+-rw-r--r-- 1 root root 292 Nov 10 11:37 worker-deployment.yaml
+-rw-r--r-- 1 root root 289 Nov 10 11:37 vote-deployment.yaml
+-rw-r--r-- 1 root root 299 Nov 10 11:37 result-deployment.yaml
+-rw-r--r-- 1 root root 152 Nov 10 11:37 redis-service.yaml
+-rw-r--r-- 1 root root 402 Nov 10 11:37 redis-deployment.yaml
+-rw-r--r-- 1 root root 146 Nov 10 11:37 db-service.yaml
+-rw-r--r-- 1 root root 401 Nov 10 11:37 db-deployment.yaml
+-rw-r--r-- 1 root root 192 Nov 10 12:02 vote-service.yaml
+-rw-r--r-- 1 root root 195 Nov 10 12:03 result-service.yaml
+[root@ip-172-31-13-244 k8s-specifications]# kubectl get all
+NAME                          READY   STATUS              RESTARTS   AGE
+POD/db-b54cd94f4-j76bt        1/1     Running             0          22s
+POD/redis-868d64d78-jh29r     0/1     ContainerCreating   0          22s
+POD/result-5d57b59f4b-jfxf5   0/1     ContainerCreating   0          22s
+POD/vote-94849dc97-ngs8l      0/1     ContainerCreating   0          22s
+POD/worker-dd46d7584-vzzpb    0/1     ContainerCreating   0          22s
+
+NAME                 TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
+service/db           ClusterIP   10.106.176.107   <none>        5432/TCP         22s
+service/kubernetes   ClusterIP   10.96.0.1        <none>        443/TCP          17m
+service/redis        ClusterIP   10.104.156.225   <none>        6379/TCP         22s
+service/result       NodePort    10.99.212.161    <none>        5001:31003/TCP   22s
+service/vote         NodePort    10.101.249.93    <none>        5000:31002/TCP   22s
+
+NAME                     READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/db       1/1     1            1           22s
+deployment.apps/redis    0/1     1            0           22s
+deployment.apps/result   0/1     1            0           22s
+deployment.apps/vote     0/1     1            0           22s
+deployment.apps/worker   0/1     1            0           22s
+
+NAME                                DESIRED   CURRENT   READY   AGE
+replicaset.apps/db-b54cd94f4        1         1         1       22s
+replicaset.apps/redis-868d64d78     1         1         0       22s
+replicaset.apps/result-5d57b59f4b   1         1         0       22s
+replicaset.apps/vote-94849dc97      1         1         0       22s
+replicaset.apps/worker-dd46d7584    1         1         0       22s
+[root@ip-172-31-13-244 k8s-specifications]# kubectl get all
+NAME                          READY   STATUS              RESTARTS   AGE
+POD/db-b54cd94f4-j76bt        1/1     Running             0          26s
+POD/redis-868d64d78-jh29r     1/1     Running             0          26s
+POD/result-5d57b59f4b-jfxf5   0/1     ContainerCreating   0          26s
+POD/vote-94849dc97-ngs8l      0/1     ContainerCreating   0          26s
+POD/worker-dd46d7584-vzzpb    0/1     ContainerCreating   0          26s
+
+NAME                 TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
+service/db           ClusterIP   10.106.176.107   <none>        5432/TCP         26s
+service/kubernetes   ClusterIP   10.96.0.1        <none>        443/TCP          17m
+service/redis        ClusterIP   10.104.156.225   <none>        6379/TCP         26s
+service/result       NodePort    10.99.212.161    <none>        5001:31003/TCP   26s
+service/vote         NodePort    10.101.249.93    <none>        5000:31002/TCP   26s
+
+NAME                     READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/db       1/1     1            1           26s
+deployment.apps/redis    1/1     1            1           26s
+deployment.apps/result   0/1     1            0           26s
+deployment.apps/vote     0/1     1            0           26s
+deployment.apps/worker   0/1     1            0           26s
+
+NAME                                DESIRED   CURRENT   READY   AGE
+replicaset.apps/db-b54cd94f4        1         1         1       26s
+replicaset.apps/redis-868d64d78     1         1         1       26s
+replicaset.apps/result-5d57b59f4b   1         1         0       26s
+replicaset.apps/vote-94849dc97      1         1         0       26s
+replicaset.apps/worker-dd46d7584    1         1         0       26s
+[root@ip-172-31-13-244 k8s-specifications]# kubectl get all
+NAME                          READY   STATUS              RESTARTS   AGE
+POD/db-b54cd94f4-j76bt        1/1     Running             0          31s
+POD/redis-868d64d78-jh29r     1/1     Running             0          31s
+POD/result-5d57b59f4b-jfxf5   0/1     ContainerCreating   0          31s
+POD/vote-94849dc97-ngs8l      0/1     ContainerCreating   0          31s
+POD/worker-dd46d7584-vzzpb    0/1     ContainerCreating   0          31s
+
+NAME                 TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
+service/db           ClusterIP   10.106.176.107   <none>        5432/TCP         31s
+service/kubernetes   ClusterIP   10.96.0.1        <none>        443/TCP          17m
+service/redis        ClusterIP   10.104.156.225   <none>        6379/TCP         31s
+service/result       NodePort    10.99.212.161    <none>        5001:31003/TCP   31s
+service/vote         NodePort    10.101.249.93    <none>        5000:31002/TCP   31s
+
+NAME                     READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/db       1/1     1            1           31s
+deployment.apps/redis    1/1     1            1           31s
+deployment.apps/result   0/1     1            0           31s
+deployment.apps/vote     0/1     1            0           31s
+deployment.apps/worker   0/1     1            0           31s
+
+NAME                                DESIRED   CURRENT   READY   AGE
+replicaset.apps/db-b54cd94f4        1         1         1       31s
+replicaset.apps/redis-868d64d78     1         1         1       31s
+replicaset.apps/result-5d57b59f4b   1         1         0       31s
+replicaset.apps/vote-94849dc97      1         1         0       31s
+replicaset.apps/worker-dd46d7584    1         1         0       31s
+[root@ip-172-31-13-244 k8s-specifications]# kubectl get all
+NAME                          READY   STATUS              RESTARTS   AGE
+POD/db-b54cd94f4-j76bt        1/1     Running             0          35s
+POD/redis-868d64d78-jh29r     1/1     Running             0          35s
+POD/result-5d57b59f4b-jfxf5   0/1     ContainerCreating   0          35s
+POD/vote-94849dc97-ngs8l      0/1     ContainerCreating   0          35s
+POD/worker-dd46d7584-vzzpb    0/1     ContainerCreating   0          35s
+
+NAME                 TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
+service/db           ClusterIP   10.106.176.107   <none>        5432/TCP         35s
+service/kubernetes   ClusterIP   10.96.0.1        <none>        443/TCP          17m
+service/redis        ClusterIP   10.104.156.225   <none>        6379/TCP         35s
+service/result       NodePort    10.99.212.161    <none>        5001:31003/TCP   35s
+service/vote         NodePort    10.101.249.93    <none>        5000:31002/TCP   35s
+
+NAME                     READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/db       1/1     1            1           35s
+deployment.apps/redis    1/1     1            1           35s
+deployment.apps/result   0/1     1            0           35s
+deployment.apps/vote     0/1     1            0           35s
+deployment.apps/worker   0/1     1            0           35s
+
+NAME                                DESIRED   CURRENT   READY   AGE
+replicaset.apps/db-b54cd94f4        1         1         1       35s
+replicaset.apps/redis-868d64d78     1         1         1       35s
+replicaset.apps/result-5d57b59f4b   1         1         0       35s
+replicaset.apps/vote-94849dc97      1         1         0       35s
+replicaset.apps/worker-dd46d7584    1         1         0       35s
+[root@ip-172-31-13-244 k8s-specifications]# kubectl get all
+NAME                          READY   STATUS    RESTARTS   AGE
+POD/db-b54cd94f4-j76bt        1/1     Running   0          101s
+POD/redis-868d64d78-jh29r     1/1     Running   0          101s
+POD/result-5d57b59f4b-jfxf5   1/1     Running   0          101s
+POD/vote-94849dc97-ngs8l      1/1     Running   0          101s
+POD/worker-dd46d7584-vzzpb    1/1     Running   0          101s
+
+NAME                 TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
+service/db           ClusterIP   10.106.176.107   <none>        5432/TCP         101s
+service/kubernetes   ClusterIP   10.96.0.1        <none>        443/TCP          18m
+service/redis        ClusterIP   10.104.156.225   <none>        6379/TCP         101s
+service/result       NodePort    10.99.212.161    <none>        5001:31003/TCP   101s
+service/vote         NodePort    10.101.249.93    <none>        5000:31002/TCP   101s
+
+NAME                     READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/db       1/1     1            1           101s
+deployment.apps/redis    1/1     1            1           101s
+deployment.apps/result   1/1     1            1           101s
+deployment.apps/vote     1/1     1            1           101s
+deployment.apps/worker   1/1     1            1           101s
+
+NAME                                DESIRED   CURRENT   READY   AGE
+replicaset.apps/db-b54cd94f4        1         1         1       101s
+replicaset.apps/redis-868d64d78     1         1         1       101s
+replicaset.apps/result-5d57b59f4b   1         1         1       101s
+replicaset.apps/vote-94849dc97      1         1         1       101s
+replicaset.apps/worker-dd46d7584    1         1         1       101s
+[root@ip-172-31-13-244 k8s-specifications]#
+[root@ip-172-31-13-244 k8s-specifications]#
+[root@ip-172-31-13-244 k8s-specifications]#
+[root@ip-172-31-13-244 k8s-specifications]# kubectl get POD -A
+NAMESPACE     NAME                                                                     READY   STATUS    RESTARTS   AGE
+default       db-b54cd94f4-j76bt                                                       1/1     Running   0          5m14s
+default       redis-868d64d78-jh29r                                                    1/1     Running   0          5m14s
+default       result-5d57b59f4b-jfxf5                                                  1/1     Running   0          5m14s
+default       vote-94849dc97-ngs8l                                                     1/1     Running   0          5m14s
+default       worker-dd46d7584-vzzpb                                                   1/1     Running   0          5m14s
+kube-system   calico-etcd-l95cf                                                        1/1     Running   0          6d
+kube-system   calico-kube-controllers-7997dc8d7b-dbtd7                                 1/1     Running   1          6d
+kube-system   calico-node-5h5nm                                                        2/2     Running   0          6d
+kube-system   calico-node-ksh65                                                        2/2     Running   2          6d
+kube-system   coredns-66bff467f8-2cp5s                                                 1/1     Running   0          6d
+kube-system   coredns-66bff467f8-vgj4v                                                 1/1     Running   0          6d
+kube-system   etcd-ip-172-31-2-45.ap-southeast-1.compute.internal                      1/1     Running   0          6d
+kube-system   kube-apiserver-ip-172-31-2-45.ap-southeast-1.compute.internal            1/1     Running   0          6d
+kube-system   kube-controller-manager-ip-172-31-2-45.ap-southeast-1.compute.internal   1/1     Running   0          6d
+kube-system   kube-proxy-md6w9                                                         1/1     Running   0          6d
+kube-system   kube-proxy-nklf5                                                         1/1     Running   0          6d
+kube-system   kube-scheduler-ip-172-31-2-45.ap-southeast-1.compute.internal            1/1     Running   0          6d
+
+[root@ip-172-31-13-244 k8s-specifications]# kubectl delete POD vote-94849dc97-ngs8l
+POD "vote-94849dc97-ngs8l" deleted
+
+[root@ip-172-31-13-244 k8s-specifications]# kubectl get POD
+NAME                      READY   STATUS    RESTARTS   AGE
+db-b54cd94f4-j76bt        1/1     Running   0          24m
+redis-868d64d78-jh29r     1/1     Running   0          24m
+result-5d57b59f4b-jfxf5   1/1     Running   0          24m
+vote-94849dc97-mdw4d      1/1     Running   0          36s
+worker-dd46d7584-vzzpb    1/1     Running   0          24m
+[root@ip-172-31-13-244 k8s-specifications]#
+
+[root@ip-172-31-13-244 k8s-specifications]# kubectl delete POD worker-dd46d7584-vzzpb
+POD "worker-dd46d7584-vzzpb" deleted
+[root@ip-172-31-13-244 k8s-specifications]# kubectl get POD
+NAME                      READY   STATUS    RESTARTS   AGE
+db-b54cd94f4-j76bt        1/1     Running   0          26m
+redis-868d64d78-jh29r     1/1     Running   0          26m
+result-5d57b59f4b-jfxf5   1/1     Running   0          26m
+vote-94849dc97-mdw4d      1/1     Running   0          2m31s
+worker-dd46d7584-4rl2c    1/1     Running   0          47s
+[root@ip-172-31-13-244 k8s-specifications]#
+
+[root@ip-172-31-13-244 k8s-specifications]# kubectl delete POD db-b54cd94f4-j76bt
+POD "db-b54cd94f4-j76bt" deleted
+[root@ip-172-31-13-244 k8s-specifications]# kubectl get POD
+NAME                      READY   STATUS    RESTARTS   AGE
+db-b54cd94f4-2xb9n        1/1     Running   0          45s
+redis-868d64d78-jh29r     1/1     Running   0          28m
+result-5d57b59f4b-jfxf5   1/1     Running   0          28m
+vote-94849dc97-mdw4d      1/1     Running   0          4m34s
+worker-dd46d7584-4rl2c    1/1     Running   1          2m50s
+[root@ip-172-31-13-244 k8s-specifications]#
+
+[root@ip-172-31-13-244 k8s-specifications]# kubectl delete POD result-5d57b59f4b-jfxf5
+POD "result-5d57b59f4b-jfxf5" deleted
+[root@ip-172-31-13-244 k8s-specifications]# kubectl get POD
+NAME                      READY   STATUS    RESTARTS   AGE
+db-b54cd94f4-2xb9n        1/1     Running   0          29m
+redis-868d64d78-jh29r     1/1     Running   0          56m
+result-5d57b59f4b-4q4kh   1/1     Running   0          58s
+vote-94849dc97-mdw4d      1/1     Running   0          33m
+worker-dd46d7584-4rl2c    1/1     Running   1          31m
+[root@ip-172-31-13-244 k8s-specifications]#
 
